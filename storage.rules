@@ -1,0 +1,58 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.email == 'admin@govstay.goa.gov.in';
+    }
+    
+    // Helper function to check if user owns the file
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Profile images - Users can upload their own profile images
+    match /profile-images/{userId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId) && 
+        request.resource.size < 5 * 1024 * 1024 && // 5MB limit
+        request.resource.contentType.matches('image/.*');
+    }
+    
+    // Hotel images - Admin only
+    match /hotel-images/{hotelId}/{fileName} {
+      allow read: if true; // Public read access for hotel images
+      allow write: if isAdmin() && 
+        request.resource.size < 10 * 1024 * 1024 && // 10MB limit
+        request.resource.contentType.matches('image/.*');
+    }
+    
+    // Room images - Admin only
+    match /room-images/{hotelId}/{roomId}/{fileName} {
+      allow read: if true; // Public read access for room images
+      allow write: if isAdmin() && 
+        request.resource.size < 10 * 1024 * 1024 && // 10MB limit
+        request.resource.contentType.matches('image/.*');
+    }
+    
+    // Booking documents - Users can upload their own documents
+    match /booking-documents/{bookingId}/{fileName} {
+      allow read: if isAuthenticated() && (
+        isOwner(resource.metadata.userId) || isAdmin()
+      );
+      allow write: if isAuthenticated() && 
+        request.resource.size < 10 * 1024 * 1024 && // 10MB limit
+        request.resource.contentType.matches('application/pdf|image/.*');
+    }
+    
+    // Deny all other access
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+} 
