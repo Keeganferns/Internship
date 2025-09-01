@@ -40,12 +40,18 @@ function MyBookings({ bookings }) {
     const checkOut = new Date(booking.checkOut);
     const nights = Math.max(1, Math.round((checkOut - checkIn) / (1000 * 60 * 60 * 24)));
     
+    // Use pricing option if available, otherwise use base room price
+    let roomPrice = selectedRoom.price;
+    if (booking.pricingOption && booking.pricingOption.price) {
+      roomPrice = booking.pricingOption.price;
+    }
+    
     // Calculate total amount including GST (same logic as receipt)
-    const subtotal = selectedRoom.price * nights * booking.selectedRooms.length;
+    const subtotal = roomPrice * nights * booking.selectedRooms.length;
     const gst = subtotal * 0.18; // 18% GST
     const total = subtotal + gst;
     
-    return total;
+    return Math.round(total);
   }
 
   const handleCancelRequest = async (bookingId) => {

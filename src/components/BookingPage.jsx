@@ -52,21 +52,18 @@ function BookingPage({ user }) {
     fetchHotel();
   }, [id]);
 
-  // Fetch bookings for this hotel (admins only)
+  // Fetch bookings for this hotel (all users need this to see occupied rooms)
   const fetchBookings = async () => {
     if (!id) return;
-    if (!isAdmin) {
-      // Regular users do not fetch bookings; no red states
-      setBookings([]);
-      return;
-    }
     try {
       const q = query(collection(db, 'bookings'), where('hotelId', '==', id));
       const snap = await getDocs(q);
       const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      console.log('Fetched bookings for hotel:', id, data);
+      console.log('Active bookings (not cancelled):', data.filter(b => !b.cancelled));
       setBookings(data);
     } catch (e) {
-      console.error('Error fetching bookings (admin):', e);
+      console.error('Error fetching bookings:', e);
     }
   };
 
@@ -119,20 +116,38 @@ function BookingPage({ user }) {
   const occupiedRoomIds = useMemo(() => {
     const inDate = parseLocalDate(checkInDate);
     const outDate = parseLocalDate(checkOutDate);
+    console.log('Computing occupied rooms for date range:', checkInDate, 'to', checkOutDate);
+    console.log('Parsed dates - In:', inDate, 'Out:', outDate);
+    
+    // Only consider active (non-cancelled) bookings
+    const activeBookings = bookings.filter(b => !b.cancelled);
+    console.log('Active bookings to check:', activeBookings);
+    
     // Overlap if booking.checkIn < out && booking.checkOut > in
     const overlaps = (b) => {
       try {
         const bIn = parseLocalDate(b.checkIn);
         const bOut = parseLocalDate(b.checkOut);
-        return bIn < outDate && bOut > inDate;
+        const hasOverlap = bIn < outDate && bOut > inDate;
+        console.log(`Booking ${b.id}: ${b.checkIn} to ${b.checkOut}, rooms: ${b.selectedRooms}, overlaps: ${hasOverlap}`);
+        return hasOverlap;
       } catch {
         return false;
       }
     };
+    
     const set = new Set();
-    bookings.filter(overlaps).forEach(b => {
-      (b.selectedRooms || []).forEach(rid => set.add(rid));
+    const overlappingBookings = activeBookings.filter(overlaps);
+    console.log('Overlapping bookings:', overlappingBookings);
+    
+    overlappingBookings.forEach(b => {
+      (b.selectedRooms || []).forEach(rid => {
+        console.log('Adding occupied room:', rid);
+        set.add(rid);
+      });
     });
+    
+    console.log('Final occupied room IDs:', Array.from(set));
     return set;
   }, [bookings, checkInDate, checkOutDate]);
 
@@ -229,27 +244,6 @@ function BookingPage({ user }) {
                   Floor {floor}
                 </button>
               ))}
-            </div>
-            <div className="flex items-end gap-2">
-              <button
-                onClick={async () => {
-                  setCheckingAvailability(true);
-                  await fetchBookings();
-                  setCheckingAvailability(false);
-                  setLastCheckedAt(new Date());
-                }}
-                disabled={!isValidDateRange || checkingAvailability}
-                className={`px-5 py-3 rounded-lg font-semibold transition-colors ${
-                  (!isValidDateRange || checkingAvailability)
-                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}
-              >
-                {checkingAvailability ? 'Checking…' : 'Check availability'}
-              </button>
-              {lastCheckedAt && (
-                <span className="text-xs text-gray-500">Last checked {lastCheckedAt.toLocaleTimeString()}</span>
-              )}
             </div>
           </div>
           {!isValidDateRange && (
