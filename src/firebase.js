@@ -20,8 +20,8 @@ const storage = getStorage(app);
 const auth = getAuth(app);
 
 // Google sign-in
-const provider = new GoogleAuthProvider();
-export const signInWithGoogle = () => signInWithPopup(auth, provider);
+const googleProvider = new GoogleAuthProvider();
+export const signInWithGoogle = () => signInWithPopup(auth, googleProvider);
 
 // Email/password sign-in
 export const signInWithEmail = (email, password) => signInWithEmailAndPassword(auth, email, password);

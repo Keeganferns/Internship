@@ -48,6 +48,12 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
     
+    // Chatbot responses - Readable by all authenticated users
+    match /chatbot_responses/{document=**} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    
     // Deny all other access
     match /{document=**} {
       allow read, write: if false;

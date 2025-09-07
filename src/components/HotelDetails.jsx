@@ -3,7 +3,6 @@ import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore'; // <-- Firestore functions are imported here.
 import { db } from '../firebase'; // <-- The db instance is imported here.
 import BookingForm from './BookingForm';
-import RoomSelector from './RoomSelector';
 import { FaMapMarkerAlt, FaPhoneAlt, FaBed, FaCheckCircle } from 'react-icons/fa';
 
 function HotelDetails({ user }) {

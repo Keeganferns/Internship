@@ -4,20 +4,23 @@ import HotelList from './components/HotelList';
 import HotelDetails from './components/HotelDetails';
 import BookingPage from './components/BookingPage';
 import RoomPricing from './components/RoomPricing';
-import Login, { Signup } from './components/Login';
+import Login from './components/Login';
+import Signup from './components/Signup';
 import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/AdminDashboard';
 import AdminSetup from './components/AdminSetup';
 import MyBookings from './components/MyBookings';
 import Footer from './components/Footer';
+import Chatbot from './components/Chatbot';
 import { auth, db, observeUser } from './firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import Info from './components/Info';
 import Help from './components/Help';
 import { FaHotel, FaInfoCircle, FaQuestionCircle } from 'react-icons/fa';
-import StorageTest from "./components/StorageTest";
 import RoomDetailsPage from './components/RoomDetailsPage';
 import RoomImageManager from './components/RoomImageManager';
+import EmailVerification from './components/EmailVerification';
+import VerificationSuccess from './components/VerificationSuccess';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -166,11 +169,16 @@ function App() {
             <Route path="/bookings" element={<MyBookings bookings={bookings} />} />
             <Route path="/info" element={<Info />} />
             <Route path="/help" element={<Help />} />
+            <Route path="/verify-email" element={<EmailVerification />} />
+            <Route path="/verification-success" element={<VerificationSuccess />} />
           </Routes>
         </main>
       </div>
       {/* Footer - hidden on booking page */}
       {!isBookingPage && <Footer />}
+      
+      {/* AI Chatbot - available on all pages */}
+      <Chatbot />
     </div>
   );
 }
